@@ -192,4 +192,4 @@ def heatmap_from_keypoint(keypoint_path, xyz_range, heatmap_size):
             # heatmap[i,k,:,:,:] = round_to_1(softmax(g),2)
             heatmap[i,k,:,:,:] = softmax(g) /0.25 #1:0.25; 0.5:0.8
             # print (np.amax(heatmap[i,k,:,:,:]))
-    return keypoint[:,:,:], 
+    return keypoint[:,:,:], heatmap

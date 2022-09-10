@@ -17,6 +17,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from progressbar import ProgressBar
 from threeD_viz_video import generateVideo
 from threeD_viz_image import generateImage
+from functools import partial
 import warnings
 warnings.filterwarnings("ignore")
 

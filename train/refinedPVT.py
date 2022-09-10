@@ -84,7 +84,7 @@ class pvt6DOF(nn.Module):
             nn.BatchNorm3d(21))
   def forward(self, input):
     out = self.pvtTiny.forward_features(input)
-    out = out.reshape(20, 5, 32, 32)
+    out = out.reshape(-1, 5, 32, 32)
     out = self.conv1(out)
     out = out.reshape(out.shape[0],out.shape[1],out.shape[2],out.shape[3],1)
     out = out.repeat(1,1,1,1,9)

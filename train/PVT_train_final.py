@@ -8,7 +8,7 @@ import io, os
 import argparse
 from torch.utils.data import Dataset, DataLoader
 from refinedPVT import SpatialSoftmax3D, pvt6DOF
-from threeD_dataLoader import sample_data_diffTask
+from threeD_dataLoader import sample_data_diffTask_2
 import pickle
 import torch
 import cv2

@@ -132,8 +132,8 @@ if args.linkLoss:
 # Chuẩn bị data for training và validation
 # args.exp_dir  -> /tactile_keypoint_data/
 #               -> /singlePerson_test/
-if not args.eval:"
-    data_path = "/LOCAL2/anguyen/faic/lthieu/6DOFTactile/train/baatch_data/"
+if not args.eval:
+    data_path = "/LOCAL2/anguyen/faic/lthieu/6DOFTactile/train/batch_data/"
     mask = []
     train_dataset = sample_data_diffTask_2(data_path, args.window, args.subsample, "train")
     train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size,shuffle=True, num_workers=8)

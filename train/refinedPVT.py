@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.parameter import Parameter
+from timm.models.vision_transformer import _cfg
 from functools import partial
 from PVT import PyramidVisionTransformer
 

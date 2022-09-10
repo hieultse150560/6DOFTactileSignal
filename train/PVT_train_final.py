@@ -25,7 +25,7 @@ parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('--exp_dir', type=str, default='./', help='Experiment path') #Change
 parser.add_argument('--exp', type=str, default='singlePeople', help='Name of experiment')
 parser.add_argument('--lr', type=float, default=1e-4, help='Learning rate') 
-parser.add_argument('--batch_size', type=int, default=512, help='Batch size,512')
+parser.add_argument('--batch_size', type=int, default=2048, help='Batch size,512')
 parser.add_argument('--weightdecay', type=float, default=1e-3, help='weight decay')
 parser.add_argument('--window', type=int, default=10, help='window around the time step')
 parser.add_argument('--subsample', type=int, default=1, help='subsample tile res')

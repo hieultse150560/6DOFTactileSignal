@@ -24,7 +24,7 @@ parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('--exp_dir', type=str, default='./', help='Experiment path') #Change
 parser.add_argument('--exp', type=str, default='singlePeople', help='Name of experiment')
 parser.add_argument('--lr', type=float, default=1e-4, help='Learning rate') 
-parser.add_argument('--batch_size', type=int, default=512, help='Batch size,512')
+parser.add_argument('--batch_size', type=int, default=256, help='Batch size,256')
 parser.add_argument('--weightdecay', type=float, default=1e-3, help='weight decay')
 parser.add_argument('--window', type=int, default=10, help='window around the time step')
 parser.add_argument('--subsample', type=int, default=1, help='subsample tile res')
@@ -133,17 +133,17 @@ if args.linkLoss:
 # args.exp_dir  -> /tactile_keypoint_data/
 #               -> /singlePerson_test/
 if not args.eval:
-    train_path = args.exp_dir + "tactile_keypoint_data/"
+    train_path = args.exp_dir + "batch_data/"
     mask = []
-    train_dataset = sample_data_diffTask(train_path, args.window, args.subsample, "train")
+    train_dataset = sample_data_diffTask_2(train_path, args.window, args.subsample, "train")
     train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size,shuffle=True, num_workers=8)
     print ("Training set size:", len(train_dataset))
 
-    val_dataset = sample_data_diffTask(train_path, args.window, args.subsample, "valid")
+    val_dataset = sample_data_diffTask_2(train_path, args.window, args.subsample, "val")
     val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, num_workers=8)
     print ("Validation set size: ", len(val_dataset))
     
-    test_dataset = sample_data_diffTask(train_path, args.window, args.subsample, "test")
+    test_dataset = sample_data_diffTask_2(train_path, args.window, args.subsample, "test")
     test_dataloader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False, num_workers=8)
     print ("Test set size: ", len(test_dataset))
     

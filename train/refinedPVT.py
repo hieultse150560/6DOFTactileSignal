@@ -81,8 +81,8 @@ class pvt6DOF(nn.Module):
     self.conv3 = nn.Sequential(
             nn.Conv3d(21, 21, kernel_size=(3,3,3),padding=1),
             nn.LeakyReLU(),
-            nn.BatchNorm3d(21))
-    self.act = nn.Sigmoid()
+            nn.BatchNorm3d(21),
+            nn.Sigmoid())
   def forward(self, input):
     out = self.pvtTiny.forward_features(input)
     out = out.reshape(-1, 5, 32, 32)
@@ -91,7 +91,6 @@ class pvt6DOF(nn.Module):
     out = out.repeat(1,1,1,1,9)
     out = self.conv2(out)
     out = self.conv3(out)
-    out = self.act(out)
     return out
 
 # input = torch.rand((20,20,96,96))

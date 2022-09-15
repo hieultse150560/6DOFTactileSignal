@@ -62,7 +62,7 @@ def remove_small(heatmap, threshold, device):
 # use_gpu = torch.cuda.is_available()
 # device = 'cuda:0' if use_gpu else 'cpu'
 use_gpu = True
-device = 'cuda:0'
+device = 'cuda:2'
 
 np.random.seed(0)
 torch.manual_seed(0)

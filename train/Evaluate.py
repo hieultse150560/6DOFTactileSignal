@@ -1,3 +1,4 @@
+# threeD_train_final.py: Define Training Loop
 import torch.nn as nn
 import time
 from torch.autograd import Variable
@@ -6,8 +7,7 @@ import numpy as np
 import io, os
 import argparse
 from torch.utils.data import Dataset, DataLoader
-from threeD_model_final import SpatialSoftmax3D, tile2openpose_conv3d
-from threeD_dataLoader import sample_data_diffTask
+from refinedPVT import SpatialSoftmax3D, pvt6DOF
 from threeD_dataLoader import sample_data_diffTask_2
 import pickle
 import torch
@@ -17,6 +17,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 from progressbar import ProgressBar
 from threeD_viz_video import generateVideo
 from threeD_viz_image import generateImage
+from functools import partial
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -66,7 +67,7 @@ device = 'cuda:2'
 
 np.random.seed(0)
 torch.manual_seed(0)
-model = tile2openpose_conv3d(args.window) # model
+model = pvt6DOF() # model
 softmax = SpatialSoftmax3D(20, 20, 18, 21) # trả về heatmap và ước tính keypoint từ heatmap predicted
 
 model.to(device)

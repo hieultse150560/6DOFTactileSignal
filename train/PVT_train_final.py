@@ -284,7 +284,7 @@ if __name__ == '__main__':
                     keypoint = torch.tensor(sample_batched[2], dtype=torch.float, device=device)
 
                     with torch.set_grad_enabled(False):
-                        heatmap_out = model(tactile, device)
+                        heatmap_out = model(tactile)
                         heatmap_out = heatmap_out.reshape(-1, 21, 20, 20, 18)
                         heatmap_transform = remove_small(heatmap_out.transpose(2,3), 1e-2, device)
                         keypoint_out, heatmap_out2 = softmax(heatmap_transform * 10)
@@ -379,7 +379,7 @@ if __name__ == '__main__':
 
 
         with torch.set_grad_enabled(False):
-            heatmap_out = model(tactile, device)
+            heatmap_out = model(tactile)
             heatmap_out = heatmap_out.reshape(-1, 21, 20, 20, 18) # Output shape từ model
             heatmap_transform = remove_small(heatmap_out.transpose(2,3), 1e-2, device)
             keypoint_out, heatmap_out2 = softmax(heatmap_transform) 

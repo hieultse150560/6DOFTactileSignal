@@ -23,14 +23,15 @@ warnings.filterwarnings("ignore")
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('--exp_dir', type=str, default='./', help='Experiment path') #Change
-parser.add_argument('--exp', type=str, default='singlePeopleFull', help='Name of experiment')
+parser.add_argument('--exp', type=str, default='singlePeople_2392022', help='Name of experiment')
 parser.add_argument('--lr', type=float, default=1e-4, help='Learning rate') 
-parser.add_argument('--batch_size', type=int, default=1024, help='Batch size,1024')
+parser.add_argument('--batch_size', type=int, default=256, help='Batch size,256')
 parser.add_argument('--weightdecay', type=float, default=1e-3, help='weight decay')
 parser.add_argument('--window', type=int, default=10, help='window around the time step')
 parser.add_argument('--subsample', type=int, default=1, help='subsample tile res')
 parser.add_argument('--linkLoss', type=bool, default=True, help='use link loss') # Find min and max link
-parser.add_argument('--epoch', type=int, default=500, help='The time steps you want to subsample the dataset to,500')
+parser.add_argument('--epoch', type=int, default=00, help='The time steps you want to subsample the dataset to,500')
+parser.add_argument('--numwork', type=int, default=16, help='The number of workers')
 parser.add_argument('--ckpt', type=str, default ='singlePerson_0.0001_10_best', help='loaded ckpt file') # Enter link of trained model
 parser.add_argument('--eval', type=bool, default=False, help='Set true if eval time') # Evaluation with test data. 2 Mode: Loading trained model and evaluate with test set, Training and Evaluation with evaluation set. 
 parser.add_argument('--test_dir', type=str, default ='./', help='test data path') # Link to test data
@@ -243,7 +244,7 @@ if __name__ == '__main__':
 
             train_loss.append(loss.data.item())
 
-            if i_batch % 50 ==0 and i_batch!=0: # Cứ 50 batch lại evaluate 1 lần
+            if i_batch % 100 ==0 and i_batch!=0: # Cứ 50 batch lại evaluate 1 lần
 
                 print("[%d/%d] LR: %.6f, Loss: %.6f, Heatmap_loss: %.6f, Keypoint_loss: %.6f, "
                       "k_max_gt: %.6f, k_max_pred: %.6f, k_min_gt: %.6f, k_min_pred: %.6f, "
@@ -298,7 +299,7 @@ if __name__ == '__main__':
                     else:
                         loss = loss_heatmap
 
-                    if i_batch % 5 == 0 and i_batch != 0:
+                    if i_batch % 50 == 0 and i_batch != 0:
                         #
                         print("[%d/%d] LR: %.6f, Loss: %.6f, Heatmap_loss: %.6f, Keypoint_loss: %.6f, "
                           "k_max_gt: %.6f, k_max_pred: %.6f, k_min_gt: %.6f, k_min_pred: %.6f, "
@@ -432,7 +433,7 @@ if __name__ == '__main__':
                 toSave = [heatmap_GT[1:,:,:,:,:], heatmap_pred[1:,:,:,:,:],
                               keypoint_GT[1:,:,:], keypoint_pred[1:,:,:],
                               tactile_GT[1:,:,:]]
-                pickle.dump(toSave, open(args.exp_dir + 'predictions/data/' + args.ckpt + str(c) + '.p', "wb"))
+                pickle.dump(toSave, open(args.exp_dir + 'predictions/data/' + args.exp + str(c) + '.p', "wb"))
                 tactile_GT = np.empty((1,96,96))
                 heatmap_GT = np.empty((1,21,20,20,18))
                 heatmap_pred = np.empty((1,21,20,20,18))
@@ -445,7 +446,7 @@ if __name__ == '__main__':
     # Nếu có lưu lại kết quả distance giữa các keypoint để kiểm nghiệm (sau khi đã xếp chồng)
     if args.exp_L2:
         dis = get_keypoint_spatial_dis(keypoint_GT_log[1:,:,:], keypoint_pred_log[1:,:,:])
-        pickle.dump(dis, open(args.exp_dir + 'predictions/L2/'+ args.ckpt + '_dis.p', "wb"))
+        pickle.dump(dis, open(args.exp_dir + 'predictions/L2/'+ args.exp + '_dis.p', "wb"))
         print ("keypoint_dis_saved:", dis, dis.shape)
  
     # Tạo video

@@ -35,8 +35,8 @@ parser.add_argument('--numwork', type=int, default=16, help='The number of worke
 parser.add_argument('--ckpt', type=str, default ='singlePerson_0.0001_10_best', help='loaded ckpt file') # Enter link of trained model
 parser.add_argument('--eval', type=bool, default=False, help='Set true if eval time') # Evaluation with test data. 2 Mode: Loading trained model and evaluate with test set, Training and Evaluation with evaluation set. 
 parser.add_argument('--test_dir', type=str, default ='./', help='test data path') # Link to test data
-parser.add_argument('--exp_image', type=bool, default=True, help='Set true if export predictions as images')
-parser.add_argument('--exp_video', type=bool, default=True, help='Set true if export predictions as video')
+parser.add_argument('--exp_image', type=bool, default=False, help='Set true if export predictions as images')
+parser.add_argument('--exp_video', type=bool, default=False, help='Set true if export predictions as video')
 parser.add_argument('--exp_data', type=bool, default=False, help='Set true if export predictions as raw data')
 parser.add_argument('--exp_L2', type=bool, default=True, help='Set true if export L2 distance')
 parser.add_argument('--train_continue', type=bool, default=False, help='Set true if eval time')

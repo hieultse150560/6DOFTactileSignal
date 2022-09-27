@@ -65,10 +65,102 @@ def pvt_tiny6DOF(pretrained=False, **kwargs):
 
     return model
 
+def pvt_small6DOF(pretrained=False, **kwargs):
+    model = PyramidVisionTransformer(
+        patch_size=4, embed_dims=[64, 128, 320, 512], num_heads=[1, 2, 5, 8], mlp_ratios=[8, 8, 4, 4], qkv_bias=True,
+        norm_layer=partial(nn.LayerNorm, eps=1e-6), depths=[3, 4, 6, 3], sr_ratios=[8, 4, 2, 1], **kwargs)
+    model.default_cfg = _cfg()
+
+    return model
+
+def pvt_medium6DOF(pretrained=False, **kwargs):
+    model = PyramidVisionTransformer(
+        patch_size=4, embed_dims=[64, 128, 320, 512], num_heads=[1, 2, 5, 8], mlp_ratios=[8, 8, 4, 4], qkv_bias=True,
+        norm_layer=partial(nn.LayerNorm, eps=1e-6), depths=[3, 4, 18, 3], sr_ratios=[8, 4, 2, 1],
+        **kwargs)
+    model.default_cfg = _cfg()
+
+    return model
+
+def pvt_large6DOF(pretrained=False, **kwargs):
+    model = PyramidVisionTransformer(
+        patch_size=4, embed_dims=[64, 128, 320, 512], num_heads=[1, 2, 5, 8], mlp_ratios=[8, 8, 4, 4], qkv_bias=True,
+        norm_layer=partial(nn.LayerNorm, eps=1e-6), depths=[3, 8, 27, 3], sr_ratios=[8, 4, 2, 1],
+        **kwargs)
+    model.default_cfg = _cfg()
+
+    return model
+
+def pvt_huge6DOF(pretrained=False, **kwargs):
+    model = PyramidVisionTransformer(
+        patch_size=4, embed_dims=[128, 256, 512, 768], num_heads=[2, 4, 8, 12], mlp_ratios=[8, 8, 4, 4], qkv_bias=True,
+        norm_layer=partial(nn.LayerNorm, eps=1e-6), depths=[3, 10, 60, 3], sr_ratios=[8, 4, 2, 1],
+        # drop_rate=0.0, drop_path_rate=0.02)
+        **kwargs)
+    model.default_cfg = _cfg()
+
+    return model
+
 class pvt6DOF(nn.Module):
   def __init__(self):
     super().__init__()
     self.pvtTiny = pvt_tiny6DOF()
+    self.conv1 = nn.Sequential(
+            nn.Conv2d(5, 21, kernel_size=(3,3)),
+            nn.LeakyReLU(),
+            nn.BatchNorm2d(21),
+            nn.MaxPool2d(kernel_size=3))
+    self.conv2 = nn.Sequential(
+            nn.ConvTranspose3d(21, 21, kernel_size=(2,2,2),stride=2),
+            nn.LeakyReLU(),
+            nn.BatchNorm3d(21))
+    self.conv3 = nn.Sequential(
+            nn.Conv3d(21, 21, kernel_size=(3,3,3),padding=1),
+            nn.LeakyReLU(),
+            nn.BatchNorm3d(21),
+            nn.Sigmoid())
+  def forward(self, input):
+    out = self.pvtTiny.forward_features(input)
+    out = out.reshape(-1, 5, 32, 32)
+    out = self.conv1(out)
+    out = out.reshape(out.shape[0],out.shape[1],out.shape[2],out.shape[3],1)
+    out = out.repeat(1,1,1,1,9)
+    out = self.conv2(out)
+    out = self.conv3(out)
+    return out
+
+class pvt6DOF_medium(nn.Module):
+  def __init__(self):
+    super().__init__()
+    self.pvtTiny = pvt_medium6DOF()
+    self.conv1 = nn.Sequential(
+            nn.Conv2d(5, 21, kernel_size=(3,3)),
+            nn.LeakyReLU(),
+            nn.BatchNorm2d(21),
+            nn.MaxPool2d(kernel_size=3))
+    self.conv2 = nn.Sequential(
+            nn.ConvTranspose3d(21, 21, kernel_size=(2,2,2),stride=2),
+            nn.LeakyReLU(),
+            nn.BatchNorm3d(21))
+    self.conv3 = nn.Sequential(
+            nn.Conv3d(21, 21, kernel_size=(3,3,3),padding=1),
+            nn.LeakyReLU(),
+            nn.BatchNorm3d(21),
+            nn.Sigmoid())
+  def forward(self, input):
+    out = self.pvtTiny.forward_features(input)
+    out = out.reshape(-1, 5, 32, 32)
+    out = self.conv1(out)
+    out = out.reshape(out.shape[0],out.shape[1],out.shape[2],out.shape[3],1)
+    out = out.repeat(1,1,1,1,9)
+    out = self.conv2(out)
+    out = self.conv3(out)
+    return out
+
+class pvt6DOF_large(nn.Module):
+  def __init__(self):
+    super().__init__()
+    self.pvtTiny = pvt_large6DOF()
     self.conv1 = nn.Sequential(
             nn.Conv2d(5, 21, kernel_size=(3,3)),
             nn.LeakyReLU(),

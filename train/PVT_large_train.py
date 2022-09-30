@@ -322,23 +322,24 @@ if __name__ == '__main__':
                 scheduler.step(np.mean(val_loss))
 
                 print ("val_loss:", np.mean(val_loss))
-                if np.mean(val_loss) < best_val_loss:
-                    print ("new_best_keypoint_l2:", np.mean(val_loss))
-                    best_val_loss = np.mean(val_loss)
-
-                    torch.save({
-                        'epoch': epoch,
-                        'model_state_dict': model.state_dict(),
-                        'optimizer_state_dict': optimizer.state_dict(),
-                        'loss': best_val_loss,},
-                       args.exp_dir + 'ckpts/' + args.exp + '_' + str(args.lr)
-                        + '_' + str(args.window) + '_best' + '.path.tar')
-                    print("Saving to ", args.exp_dir + 'ckpts/' + args.exp + '_' + str(args.lr)
-                        + '_' + str(args.window) + '_best' + '.path.tar')
 
 
             avg_train_loss = np.mean(train_loss)
             avg_val_loss = np.mean(val_loss)
+            
+            if avg_val_loss < best_val_loss:
+                print ("new_best_keypoint_l2:", np.mean(val_loss))
+                best_val_loss = np.mean(val_loss)
+
+                torch.save({
+                    'epoch': epoch,
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    'loss': best_val_loss,},
+                   args.exp_dir + 'ckpts/' + args.exp + '_' + str(args.lr)
+                    + '_' + str(args.window) + '_best' + '.path.tar')
+                print("Saving to ", args.exp_dir + 'ckpts/' + args.exp + '_' + str(args.lr)
+                    + '_' + str(args.window) + '_best' + '.path.tar')
 
             avg_train_loss = np.array([avg_train_loss])
             avg_val_loss = np.array([avg_val_loss])

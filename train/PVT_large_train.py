@@ -23,7 +23,7 @@ warnings.filterwarnings("ignore")
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('--exp_dir', type=str, default='./', help='Experiment path') #Change
-parser.add_argument('--exp', type=str, default='singlePeople_pvtLarge_2709', help='Name of experiment')
+parser.add_argument('--exp', type=str, default='singlePeople_pvtLarge', help='Name of experiment')
 parser.add_argument('--lr', type=float, default=1e-4, help='Learning rate') 
 parser.add_argument('--batch_size', type=int, default=256, help='Batch size,256')
 parser.add_argument('--weightdecay', type=float, default=1e-3, help='weight decay')
@@ -266,7 +266,7 @@ if __name__ == '__main__':
                 'epoch': epoch,
                 'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
-                'loss': loss,},
+                'loss': best_val_loss,},
                  args.exp_dir + 'ckpts/' + args.exp + '_' + str(args.lr)
                  + '_' + str(args.window) + '_' + 'cp'+ str(epoch) + '.path.tar')
                 print("Saving to ", args.exp_dir + 'ckpts/' + args.exp + '_' + str(args.lr)
@@ -330,7 +330,7 @@ if __name__ == '__main__':
                         'epoch': epoch,
                         'model_state_dict': model.state_dict(),
                         'optimizer_state_dict': optimizer.state_dict(),
-                        'loss': loss,},
+                        'loss': best_val_loss,},
                        args.exp_dir + 'ckpts/' + args.exp + '_' + str(args.lr)
                         + '_' + str(args.window) + '_best' + '.path.tar')
                     print("Saving to ", args.exp_dir + 'ckpts/' + args.exp + '_' + str(args.lr)

@@ -67,6 +67,7 @@ def pvt_tiny6DOF(pretrained=False, **kwargs):
 
 def pvt_small6DOF(pretrained=False, **kwargs):
     model = PyramidVisionTransformer(
+        img_size = 96,
         patch_size=4, in_chans = 20, embed_dims=[64, 128, 320, 512], num_heads=[1, 2, 5, 8], mlp_ratios=[8, 8, 4, 4], qkv_bias=True,
         norm_layer=partial(nn.LayerNorm, eps=1e-6), depths=[3, 4, 6, 3], sr_ratios=[8, 4, 2, 1], **kwargs)
     model.default_cfg = _cfg()
@@ -75,6 +76,7 @@ def pvt_small6DOF(pretrained=False, **kwargs):
 
 def pvt_medium6DOF(pretrained=False, **kwargs):
     model = PyramidVisionTransformer(
+        img_size = 96,
         patch_size=4, in_chans = 20, embed_dims=[64, 128, 320, 512], num_heads=[1, 2, 5, 8], mlp_ratios=[8, 8, 4, 4], qkv_bias=True,
         norm_layer=partial(nn.LayerNorm, eps=1e-6), depths=[3, 4, 18, 3], sr_ratios=[8, 4, 2, 1],
         **kwargs)
@@ -84,6 +86,7 @@ def pvt_medium6DOF(pretrained=False, **kwargs):
 
 def pvt_large6DOF(pretrained=False, **kwargs):
     model = PyramidVisionTransformer(
+        img_size = 96,
         patch_size=4, in_chans = 20, embed_dims=[64, 128, 320, 512], num_heads=[1, 2, 5, 8], mlp_ratios=[8, 8, 4, 4], qkv_bias=True,
         norm_layer=partial(nn.LayerNorm, eps=1e-6), depths=[3, 8, 27, 3], sr_ratios=[8, 4, 2, 1],
         **kwargs)
@@ -93,6 +96,7 @@ def pvt_large6DOF(pretrained=False, **kwargs):
 
 def pvt_huge6DOF(pretrained=False, **kwargs):
     model = PyramidVisionTransformer(
+        img_size = 96,
         patch_size=4, in_chans = 20, embed_dims=[128, 256, 512, 768], num_heads=[2, 4, 8, 12], mlp_ratios=[8, 8, 4, 4], qkv_bias=True,
         norm_layer=partial(nn.LayerNorm, eps=1e-6), depths=[3, 10, 60, 3], sr_ratios=[8, 4, 2, 1],
         # drop_rate=0.0, drop_path_rate=0.02)

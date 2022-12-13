@@ -208,7 +208,7 @@ class PyramidVisionTransformer(nn.Module):
             drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[cur + i], norm_layer=norm_layer,
             sr_ratio=sr_ratios[3])
             for i in range(depths[3])])
-        self.norm = norm_layer(embed_dims[3])
+        self.norm = norm_layer(embed_dims[2])
 
         # cls_token
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dims[3]))
@@ -304,22 +304,22 @@ class PyramidVisionTransformer(nn.Module):
             x = blk(x, H, W)
         x = x.reshape(B, H, W, -1).permute(0, 3, 1, 2).contiguous()
 
-        # stage 4
-        x, (H, W) = self.patch_embed4(x) # x.shape = (B, 7 * 7, 512)
-        # cls_tokens = self.cls_token.expand(B, -1, -1) # self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dims[3]))
-        # x = torch.cat((cls_tokens, x), dim=1) # Concat one dimension in number of patches dim
-        x = x + self.pos_embed4
-        x = self.pos_drop4(x)
-        for blk in self.block4:
-            x = blk(x, H, W)
+        # # stage 4
+        # x, (H, W) = self.patch_embed4(x) # x.shape = (B, 7 * 7, 512)
+        # # cls_tokens = self.cls_token.expand(B, -1, -1) # self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dims[3]))
+        # # x = torch.cat((cls_tokens, x), dim=1) # Concat one dimension in number of patches dim
+        # x = x + self.pos_embed4
+        # x = self.pos_drop4(x)
+        # for blk in self.block4:
+        #     x = blk(x, H, W)
 
-        x = self.norm(x)
+        # x = self.norm(x)
 
         return x, features
 
     def forward(self, x):
-        x = self.forward_features(x)
-        x = self.head(x)
+        x, features = self.forward_features(x)
+        # x = self.head(x)
 
         return x
 

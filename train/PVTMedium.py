@@ -65,37 +65,32 @@ def pvt_medium6DOF(pretrained=False, **kwargs):
 
     return model
 
-class PVTmedium(nn.Module):
+
+class PVTMedium(nn.Module):
   def __init__(self):
     self.x = 11
     super().__init__()
     self.pvtMedium = pvt_medium6DOF()
     self.conv_00 = nn.Sequential(
-            nn.Conv3d(256, 128, kernel_size=(5,5,5)),
-            nn.LeakyReLU(),
-            nn.BatchNorm3d(128))
-    self.conv_01 = nn.Sequential(
-            nn.Conv3d(128, 64, kernel_size=(3,3,3), padding=1),
+            nn.Conv3d(128, 64, kernel_size=(5,5,5)),
             nn.LeakyReLU(),
             nn.BatchNorm3d(64))
-    self.conv_02 = nn.Sequential(
+    self.conv_01 = nn.Sequential(
             nn.Conv3d(64, 32, kernel_size=(3,3,3), padding=1),
             nn.LeakyReLU(),
             nn.BatchNorm3d(32))
-    self.conv_03 = nn.Sequential(
+    self.conv_02 = nn.Sequential(
             nn.Conv3d(32, 21, kernel_size=(3,3,3), padding=1),
             nn.LeakyReLU(),
             nn.BatchNorm3d(21),
             nn.Sigmoid())
+    
+
     self.convTrans_00 = nn.Sequential(
-            nn.ConvTranspose3d(512, 256, kernel_size=(2,2,2),stride=2),
-            nn.LeakyReLU(),
-            nn.BatchNorm3d(256))
-    self.convTrans_01 = nn.Sequential(
             nn.ConvTranspose3d(256, 128, kernel_size=(2,2,2),stride=2),
             nn.LeakyReLU(),
             nn.BatchNorm3d(128))
-    self.convTrans_02 = nn.Sequential(
+    self.convTrans_01 = nn.Sequential(
             nn.ConvTranspose3d(128, 64, kernel_size=(2,2,2),stride=2),
             nn.LeakyReLU(),
             nn.BatchNorm3d(64))
@@ -103,19 +98,11 @@ class PVTmedium(nn.Module):
     
   def forward(self, input):
     out, features = self.pvtMedium.forward_features(input)
-    out = out.reshape(-1, 12, 12, 512).permute(0, 3, 1, 2).contiguous()
+    out = out.reshape(-1, 12, 12, 256).permute(0, 3, 1, 2).contiguous()
     out = out.reshape(out.shape[0], out.shape[1], out.shape[2], out.shape[3], 1)
     out = out.repeat(1,1,1,1, self.x)
     out = self.convTrans_00(out)
     out = self.conv_00(out)
     out = self.conv_01(out)
     out = self.conv_02(out)
-    out = self.conv_03(out)
     return out
-
-# input = torch.rand((20,20,96,96))
-# model = UNet6DOF_medium()
-# output = model(input)
-# pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-# print (pytorch_total_params)
-# print(output.shape)

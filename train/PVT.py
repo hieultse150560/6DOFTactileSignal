@@ -63,7 +63,7 @@ class Attention(nn.Module):
         # N = number of patches
         B, N, C = x.shape
         # Linear projection from C to dim dimensions, then reshape it into numhead and reshape to (B, num_heads, N, C//numheads) >>> Each head has its own query value
-        q = self.q(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3)
+        q = self.q(x).reshape(B, N, self.num_heads, C // self.num_heads).permute(0, 2, 1, 3) # dim = C
 
         if self.sr_ratio > 1:
             x_ = x.permute(0, 2, 1).reshape(B, C, H, W) 
@@ -71,19 +71,20 @@ class Attention(nn.Module):
             x_ = self.sr(x_).reshape(B, C, -1).permute(0, 2, 1)
             # Layer norm over the last dimension
             x_ = self.norm(x_)
-            # Project to B, new_dim, 2*dim to B, new_dim, 2, num_heads, head_dim and reshaped to 2, B, num_heads, new_patches, C // numheads
+            # Project to B, N, 2*dim to B, N, 2, num_heads, head_dim and reshaped to 2, B, num_heads, N, C // numheads
             kv = self.kv(x_).reshape(B, -1, 2, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         else:
             # Linear layer only project the last dimension.
+            # Project to B, N, 2*dim to B, N, 2, num_heads, head_dim and reshaped to 2, B, num_heads, N, C // numheads
             kv = self.kv(x).reshape(B, -1, 2, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
         k, v = kv[0], kv[1]
 
         # @: Matrix Multiplication, only apply with the 2 last dimensions.
-        attn = (q @ k.transpose(-2, -1)) * self.scale # (B, num_heads, N, C//numheads) and (B, num_heads, new_patches, C//numheads) >>> (B, num_heads, N, new_patches)  <The scale ratio is equipvalent to the usage of 2D Convolution features for Patch division>
+        attn = (q @ k.transpose(-2, -1)) * self.scale # (B, num_heads, N, C//numheads) and (B, num_heads, N, C//numheads) >>> (B, num_heads, N, N)  <The scale ratio is equipvalent to the usage of 2D Convolution features for Patch division>
         attn = attn.softmax(dim=-1)
         attn = self.attn_drop(attn) # Dropout the attention
 
-        x = (attn @ v).transpose(1, 2).reshape(B, N, C) # (B, num_heads, N, new_patches) * (B, num_heads, new_patches, C//numheads) >>> (B, num_heads, N, C//numheads) >>> Transpose and eshape to (B, N, C)
+        x = (attn @ v).transpose(1, 2).reshape(B, N, C) # (B, num_heads, N, N) * (B, num_heads, N, C//numheads) >>> (B, num_heads, N, C//numheads) >>> Transpose and eshape to (B, N, C)
         x = self.proj(x) # (B,N,C) >> (B,N,C)
         x = self.proj_drop(x)
 
@@ -158,13 +159,13 @@ class PyramidVisionTransformer(nn.Module):
         self.depths = depths
 
         # patch_embed
-        self.patch_embed1 = PatchEmbed(img_size=img_size, patch_size=patch_size, in_chans=in_chans,
+        self.patch_embed1 = PatchEmbed(img_size=img_size, patch_size=2, in_chans=in_chans, # Thay patch_size ban đầu là 2
                                        embed_dim=embed_dims[0]) # Nếu như vậy patch_size đầu tiên phải là 4
-        self.patch_embed2 = PatchEmbed(img_size=img_size // 4, patch_size=2, in_chans=embed_dims[0],
+        self.patch_embed2 = PatchEmbed(img_size=img_size // 2, patch_size=2, in_chans=embed_dims[0], # Thay pos_embed từ 4 8 16 thành 2 4 8
                                        embed_dim=embed_dims[1])
-        self.patch_embed3 = PatchEmbed(img_size=img_size // 8, patch_size=2, in_chans=embed_dims[1],
+        self.patch_embed3 = PatchEmbed(img_size=img_size // 4, patch_size=2, in_chans=embed_dims[1],
                                        embed_dim=embed_dims[2])
-        self.patch_embed4 = PatchEmbed(img_size=img_size // 16, patch_size=2, in_chans=embed_dims[2],
+        self.patch_embed4 = PatchEmbed(img_size=img_size // 8, patch_size=2, in_chans=embed_dims[2],
                                        embed_dim=embed_dims[3])
 
         # pos_embed
@@ -174,13 +175,13 @@ class PyramidVisionTransformer(nn.Module):
         self.pos_drop2 = nn.Dropout(p=drop_rate)
         self.pos_embed3 = nn.Parameter(torch.zeros(1, self.patch_embed3.num_patches, embed_dims[2]))
         self.pos_drop3 = nn.Dropout(p=drop_rate)
-        self.pos_embed4 = nn.Parameter(torch.zeros(1, self.patch_embed4.num_patches + 1, embed_dims[3]))
+        self.pos_embed4 = nn.Parameter(torch.zeros(1, self.patch_embed4.num_patches, embed_dims[3])) # Không concatenate vào cuối nữa
         self.pos_drop4 = nn.Dropout(p=drop_rate)
 
         # transformer encoder
         dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))]  # stochastic depth decay rule depends on depth of each block
         cur = 0
-        # Block là sử lí sao khi patches embedding: N = H * W của khối patch embedding input.
+        # Block là xử lí sao khi patches embedding: N = H * W của khối patch embedding input.
         self.block1 = nn.ModuleList([Block(
             dim=embed_dims[0], num_heads=num_heads[0], mlp_ratio=mlp_ratios[0], qkv_bias=qkv_bias, qk_scale=qk_scale,
             drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[cur + i], norm_layer=norm_layer,
@@ -207,7 +208,7 @@ class PyramidVisionTransformer(nn.Module):
             drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[cur + i], norm_layer=norm_layer,
             sr_ratio=sr_ratios[3])
             for i in range(depths[3])])
-        self.norm = norm_layer(embed_dims[3])
+        self.norm = norm_layer(embed_dims[2])
 
         # cls_token
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dims[3]))
@@ -271,10 +272,12 @@ class PyramidVisionTransformer(nn.Module):
     #             size=(H, W), mode="bilinear").reshape(1, -1, H * W).permute(0, 2, 1)
 
     def forward_features(self, x):
+        features = []
         B = x.shape[0]
         # B = (B,224,224,3)
         # stage 1
         x, (H, W) = self.patch_embed1(x) # x.shape = (B, 3136, 64)
+        features.append(x)
         x = x + self.pos_embed1
         x = self.pos_drop1(x)
         for blk in self.block1:
@@ -285,6 +288,7 @@ class PyramidVisionTransformer(nn.Module):
 
         # stage 2
         x, (H, W) = self.patch_embed2(x) # x.shape = (B, 28*28, 128)
+        features.append(x)
         x = x + self.pos_embed2
         x = self.pos_drop2(x)
         for blk in self.block2:
@@ -293,28 +297,29 @@ class PyramidVisionTransformer(nn.Module):
 
         # stage 3
         x, (H, W) = self.patch_embed3(x) # x.shape = (B, 14 * 14, 256)
+        features.append(x)
         x = x + self.pos_embed3
         x = self.pos_drop3(x)
         for blk in self.block3:
             x = blk(x, H, W)
         x = x.reshape(B, H, W, -1).permute(0, 3, 1, 2).contiguous()
 
-        # stage 4
-        x, (H, W) = self.patch_embed4(x) # x.shape = (B, 7 * 7, 512)
-        cls_tokens = self.cls_token.expand(B, -1, -1) # self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dims[3]))
-        x = torch.cat((cls_tokens, x), dim=1) # Concat one dimension in number of patches dim
-        x = x + self.pos_embed4
-        x = self.pos_drop4(x)
-        for blk in self.block4:
-            x = blk(x, H, W)
+        # # stage 4
+        # x, (H, W) = self.patch_embed4(x) # x.shape = (B, 7 * 7, 512)
+        # # cls_tokens = self.cls_token.expand(B, -1, -1) # self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dims[3]))
+        # # x = torch.cat((cls_tokens, x), dim=1) # Concat one dimension in number of patches dim
+        # x = x + self.pos_embed4
+        # x = self.pos_drop4(x)
+        # for blk in self.block4:
+        #     x = blk(x, H, W)
 
-        x = self.norm(x)
+        # x = self.norm(x)
 
-        return x
+        return x, features
 
     def forward(self, x):
-        x = self.forward_features(x)
-        x = self.head(x)
+        x, features = self.forward_features(x)
+        # x = self.head(x)
 
         return x
 
@@ -387,5 +392,50 @@ def pvt_huge_v2(pretrained=False, **kwargs):
 
 # model = pvt_tiny()
 # k = torch.rand((10,3,224,224))
-# o = model.forward_features(k)
+# o, features = model.forward_features(k)
+# for each in features:
+#   print(each.shape)
+# pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+# print (pytorch_total_params)
 # print(o.shape)
+# # print(o)
+
+# model = pvt_small()
+# k = torch.rand((10,3,224,224))
+# o, features = model.forward_features(k)
+# for each in features:
+#   print(each.shape)
+# pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+# print (pytorch_total_params)
+# print(o.shape)
+# # print(o)
+
+# model = pvt_medium()
+# k = torch.rand((10,3,224,224))
+# o, features = model.forward_features(k)
+# for each in features:
+#   print(each.shape)
+# pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+# print (pytorch_total_params)
+# print(o.shape)
+# # print(o)
+
+# model = pvt_large()
+# k = torch.rand((10,3,224,224))
+# o, features = model.forward_features(k)
+# for each in features:
+#   print(each.shape)
+# pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+# print (pytorch_total_params)
+# print(o.shape)
+# # print(o)
+
+# model = pvt_huge_v2()
+# k = torch.rand((10,3,224,224))
+# o, features = model.forward_features(k)
+# for each in features:
+#   print(each.shape)
+# pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+# print (pytorch_total_params)
+# print(o.shape)
+# # print(o)

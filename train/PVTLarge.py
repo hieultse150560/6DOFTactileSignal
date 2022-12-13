@@ -65,7 +65,7 @@ def pvt_large6DOF(pretrained=False, **kwargs):
 
     return model
 
-class PVTmedium(nn.Module):
+class PVTlarge(nn.Module):
   def __init__(self):
     self.x = 11
     super().__init__()

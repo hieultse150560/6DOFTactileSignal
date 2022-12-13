@@ -84,8 +84,6 @@ class PVTMedium(nn.Module):
             nn.LeakyReLU(),
             nn.BatchNorm3d(21),
             nn.Sigmoid())
-    
-
     self.convTrans_00 = nn.Sequential(
             nn.ConvTranspose3d(256, 128, kernel_size=(2,2,2),stride=2),
             nn.LeakyReLU(),

@@ -121,7 +121,7 @@ if not os.path.exists(args.exp_dir + 'predictions'):
 # use_gpu = torch.cuda.is_available()
 # device = 'cuda:0' if use_gpu else 'cpu'
 use_gpu = True
-device = 'cuda:1'
+device = 'cuda:2'
 
 if args.linkLoss:
   link_max = [0.11275216, 0.02857364, 0.03353087, 0.05807897, 0.04182064, 0.0540275, 0.04558805, 0.04482517, 0.10364685, 0.08350807, 0.0324904, 0.10430953, 0.08306233, 0.03899737, 0.04866854, 0.03326589, 0.02623637, 0.04040782, 0.02288897, 0.02690871] 

@@ -208,7 +208,7 @@ class PyramidVisionTransformer(nn.Module):
             drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[cur + i], norm_layer=norm_layer,
             sr_ratio=sr_ratios[3])
             for i in range(depths[3])])
-        self.norm = norm_layer(embed_dims[2])
+        self.norm = norm_layer(embed_dims[3])
 
         # cls_token
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dims[3]))
@@ -304,22 +304,22 @@ class PyramidVisionTransformer(nn.Module):
             x = blk(x, H, W)
         x = x.reshape(B, H, W, -1).permute(0, 3, 1, 2).contiguous()
 
-        # # stage 4
-        # x, (H, W) = self.patch_embed4(x) # x.shape = (B, 7 * 7, 512)
-        # # cls_tokens = self.cls_token.expand(B, -1, -1) # self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dims[3]))
-        # # x = torch.cat((cls_tokens, x), dim=1) # Concat one dimension in number of patches dim
-        # x = x + self.pos_embed4
-        # x = self.pos_drop4(x)
-        # for blk in self.block4:
-        #     x = blk(x, H, W)
+        # stage 4
+        x, (H, W) = self.patch_embed4(x) # x.shape = (B, 7 * 7, 512)
+        # cls_tokens = self.cls_token.expand(B, -1, -1) # self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dims[3]))
+        # x = torch.cat((cls_tokens, x), dim=1) # Concat one dimension in number of patches dim
+        x = x + self.pos_embed4
+        x = self.pos_drop4(x)
+        for blk in self.block4:
+            x = blk(x, H, W)
 
-        # x = self.norm(x)
+        x = self.norm(x)
 
         return x, features
 
     def forward(self, x):
-        x, features = self.forward_features(x)
-        # x = self.head(x)
+        x = self.forward_features(x)
+        x = self.head(x)
 
         return x
 
@@ -388,54 +388,3 @@ def pvt_huge_v2(pretrained=False, **kwargs):
     model.default_cfg = _cfg()
 
     return model
-
-
-# model = pvt_tiny()
-# k = torch.rand((10,3,224,224))
-# o, features = model.forward_features(k)
-# for each in features:
-#   print(each.shape)
-# pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-# print (pytorch_total_params)
-# print(o.shape)
-# # print(o)
-
-# model = pvt_small()
-# k = torch.rand((10,3,224,224))
-# o, features = model.forward_features(k)
-# for each in features:
-#   print(each.shape)
-# pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-# print (pytorch_total_params)
-# print(o.shape)
-# # print(o)
-
-# model = pvt_medium()
-# k = torch.rand((10,3,224,224))
-# o, features = model.forward_features(k)
-# for each in features:
-#   print(each.shape)
-# pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-# print (pytorch_total_params)
-# print(o.shape)
-# # print(o)
-
-# model = pvt_large()
-# k = torch.rand((10,3,224,224))
-# o, features = model.forward_features(k)
-# for each in features:
-#   print(each.shape)
-# pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-# print (pytorch_total_params)
-# print(o.shape)
-# # print(o)
-
-# model = pvt_huge_v2()
-# k = torch.rand((10,3,224,224))
-# o, features = model.forward_features(k)
-# for each in features:
-#   print(each.shape)
-# pytorch_total_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-# print (pytorch_total_params)
-# print(o.shape)
-# # print(o)

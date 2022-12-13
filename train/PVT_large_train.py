@@ -7,7 +7,7 @@ import numpy as np
 import io, os
 import argparse
 from torch.utils.data import Dataset, DataLoader
-from refinedPVT import SpatialSoftmax3D, pvt6DOF, pvt6DOF_medium, pvt6DOF_large
+from PVTLarge import SpatialSoftmax3D, PVTLarge
 from threeD_dataLoader import sample_data_diffTask_2
 import pickle
 import torch

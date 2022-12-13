@@ -23,14 +23,14 @@ warnings.filterwarnings("ignore")
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('--exp_dir', type=str, default='./', help='Experiment path') #Change
-parser.add_argument('--exp', type=str, default='singlePeople_pvtLarge', help='Name of experiment')
+parser.add_argument('--exp', type=str, default='singlePeople_PVTLarge_13_12', help='Name of experiment')
 parser.add_argument('--lr', type=float, default=1e-4, help='Learning rate') 
-parser.add_argument('--batch_size', type=int, default=256, help='Batch size,256')
+parser.add_argument('--batch_size', type=int, default=32, help='Batch size,32')
 parser.add_argument('--weightdecay', type=float, default=1e-3, help='weight decay')
 parser.add_argument('--window', type=int, default=10, help='window around the time step')
 parser.add_argument('--subsample', type=int, default=1, help='subsample tile res')
 parser.add_argument('--linkLoss', type=bool, default=True, help='use link loss') # Find min and max link
-parser.add_argument('--epoch', type=int, default=200, help='The time steps you want to subsample the dataset to,500')
+parser.add_argument('--epoch', type=int, default=500, help='The time steps you want to subsample the dataset to,500')
 parser.add_argument('--numwork', type=int, default=16, help='The number of workers')
 parser.add_argument('--ckpt', type=str, default ='singlePerson_0.0001_10_best', help='loaded ckpt file') # Enter link of trained model
 parser.add_argument('--eval', type=bool, default=False, help='Set true if eval time') # Evaluation with test data. 2 Mode: Loading trained model and evaluate with test set, Training and Evaluation with evaluation set. 
@@ -41,7 +41,6 @@ parser.add_argument('--exp_data', type=bool, default=False, help='Set true if ex
 parser.add_argument('--exp_L2', type=bool, default=True, help='Set true if export L2 distance')
 parser.add_argument('--train_continue', type=bool, default=False, help='Set true if eval time')
 args = parser.parse_args()
-
 
 def weights_init(m):
     classname = m.__class__.__name__
@@ -122,7 +121,7 @@ if not os.path.exists(args.exp_dir + 'predictions'):
 # use_gpu = torch.cuda.is_available()
 # device = 'cuda:0' if use_gpu else 'cpu'
 use_gpu = True
-device = 'cuda:0'
+device = 'cuda:2'
 
 if args.linkLoss:
   link_max = [0.11275216, 0.02857364, 0.03353087, 0.05807897, 0.04182064, 0.0540275, 0.04558805, 0.04482517, 0.10364685, 0.08350807, 0.0324904, 0.10430953, 0.08306233, 0.03899737, 0.04866854, 0.03326589, 0.02623637, 0.04040782, 0.02288897, 0.02690871] 
@@ -163,7 +162,7 @@ print (f"Name of experiment: {args.exp}, Window size: {args.window}, Subsample: 
 if __name__ == '__main__':
     np.random.seed(0)
     torch.manual_seed(0)
-    model = pvt6DOF_large() # model
+    model = PVTLarge()
     softmax = SpatialSoftmax3D(20, 20, 18, 21) # trả về heatmap và ước tính keypoint từ heatmap predicted
 
     model.to(device)
@@ -244,7 +243,7 @@ if __name__ == '__main__':
 
             train_loss.append(loss.data.item())
 
-            if i_batch % 100 ==0 and i_batch!=0: # Cứ 50 batch lại evaluate 1 lần
+            if i_batch % 1000 ==0 and i_batch!=0: # Cứ 50 batch lại evaluate 1 lần
 
                 print("[%d/%d] LR: %.6f, Loss: %.6f, Heatmap_loss: %.6f, Keypoint_loss: %.6f, "
                       "k_max_gt: %.6f, k_max_pred: %.6f, k_min_gt: %.6f, k_min_pred: %.6f, "
@@ -260,17 +259,6 @@ if __name__ == '__main__':
                     print ("loss_heatmap:", loss_heatmap.cpu().data.numpy(),
                            "loss_link:", loss_link.cpu().data.numpy(),
                            "loss_keypoint:", loss_keypoint.cpu().data.numpy())
-
-
-                torch.save({
-                'epoch': epoch,
-                'model_state_dict': model.state_dict(),
-                'optimizer_state_dict': optimizer.state_dict(),
-                'loss': best_val_loss,},
-                 args.exp_dir + 'ckpts/' + args.exp + '_' + str(args.lr)
-                 + '_' + str(args.window) + '_' + 'cp'+ str(epoch) + '.path.tar')
-                print("Saving to ", args.exp_dir + 'ckpts/' + args.exp + '_' + str(args.lr)
-                 + '_' + str(args.window) + '_' + 'cp'+ str(epoch) + '.path.tar')
 
                 print("Now running on val set")
                 model.train(False)
@@ -299,57 +287,62 @@ if __name__ == '__main__':
                     else:
                         loss = loss_heatmap
 
-                    if i_batch % 50 == 0 and i_batch != 0:
-                        #
-                        print("[%d/%d] LR: %.6f, Loss: %.6f, Heatmap_loss: %.6f, Keypoint_loss: %.6f, "
-                          "k_max_gt: %.6f, k_max_pred: %.6f, k_min_gt: %.6f, k_min_pred: %.6f, "
-                          "h_max_gt: %.6f, h_max_pred: %.6f, h_min_gt: %.6f, h_min_pred: %.6f" % (
-                        i_batch, len(val_dataloader), get_lr(optimizer), loss.item(), loss_heatmap, loss_keypoint,
-                        np.amax(keypoint.cpu().data.numpy()), np.amax(keypoint_out.cpu().data.numpy()),
-                        np.amin(keypoint.cpu().data.numpy()), np.amin(keypoint_out.cpu().data.numpy()),
-                        np.amax(heatmap.cpu().data.numpy()), np.amax(heatmap_out.cpu().data.numpy()),
-                        np.amin(heatmap.cpu().data.numpy()), np.amin(heatmap_out.cpu().data.numpy())))
-                        #
-                        if args.linkLoss:
-                            print ("loss_heatmap:", loss_heatmap.cpu().data.numpy(),
-                                   "loss_link:", loss_link.cpu().data.numpy(),
-                                   "loss_keypoint:", loss_keypoint.cpu().data.numpy())
+#                     if i_batch % 50 == 0 and i_batch != 0:
+#                         #
+#                         print("[%d/%d] LR: %.6f, Loss: %.6f, Heatmap_loss: %.6f, Keypoint_loss: %.6f, "
+#                           "k_max_gt: %.6f, k_max_pred: %.6f, k_min_gt: %.6f, k_min_pred: %.6f, "
+#                           "h_max_gt: %.6f, h_max_pred: %.6f, h_min_gt: %.6f, h_min_pred: %.6f" % (
+#                         i_batch, len(val_dataloader), get_lr(optimizer), loss.item(), loss_heatmap, loss_keypoint,
+#                         np.amax(keypoint.cpu().data.numpy()), np.amax(keypoint_out.cpu().data.numpy()),
+#                         np.amin(keypoint.cpu().data.numpy()), np.amin(keypoint_out.cpu().data.numpy()),
+#                         np.amax(heatmap.cpu().data.numpy()), np.amax(heatmap_out.cpu().data.numpy()),
+#                         np.amin(heatmap.cpu().data.numpy()), np.amin(heatmap_out.cpu().data.numpy())))
+#                         #
+#                         if args.linkLoss:
+#                             print ("loss_heatmap:", loss_heatmap.cpu().data.numpy(),
+#                                    "loss_link:", loss_link.cpu().data.numpy(),
+#                                    "loss_keypoint:", loss_keypoint.cpu().data.numpy())
 
 
                     val_loss.append(loss.data.item())
 
 
                 scheduler.step(np.mean(val_loss))
+        avg_train_loss = np.mean(train_loss)
+        avg_val_loss = np.mean(val_loss)
+        torch.save({
+        'epoch': epoch,
+        'model_state_dict': model.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict(),
+        'loss': avg_val_loss,},
+         args.exp_dir + 'ckpts/' + args.exp + '_' + str(args.lr)
+         + '_' + str(args.window) + '_' + 'cp'+ str(epoch) + '.path.tar')
+        print("Saving to ", args.exp_dir + 'ckpts/' + args.exp + '_' + str(args.lr)
+         + '_' + str(args.window) + '_' + 'cp'+ str(epoch) + '.path.tar')
+        if avg_val_loss < best_val_loss:
+            print ("new_best_keypoint_l2:", avg_val_loss)
+            best_val_loss = avg_val_loss
 
-                print ("val_loss:", np.mean(val_loss))
+            torch.save({
+                'epoch': epoch,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'loss': best_val_loss,},
+               args.exp_dir + 'ckpts/' + args.exp + '_' + str(args.lr)
+                + '_' + str(args.window) + '_best' + '.path.tar')
+            print("Saving to ", args.exp_dir + 'ckpts/' + args.exp + '_' + str(args.lr)
+                + '_' + str(args.window) + '_best' + '.path.tar')
 
+        avg_train_loss_save = np.array([avg_train_loss])
+        avg_val_loss_save = np.array([avg_val_loss])
 
-            avg_train_loss = np.mean(train_loss)
-            avg_val_loss = np.mean(val_loss)
-            
-            if avg_val_loss < best_val_loss:
-                print ("new_best_keypoint_l2:", np.mean(val_loss))
-                best_val_loss = np.mean(val_loss)
+        train_loss_list = np.append(train_loss_list,avg_train_loss_save, axis =0)
+        val_loss_list = np.append(val_loss_list,avg_val_loss_save, axis = 0)
 
-                torch.save({
-                    'epoch': epoch,
-                    'model_state_dict': model.state_dict(),
-                    'optimizer_state_dict': optimizer.state_dict(),
-                    'loss': best_val_loss,},
-                   args.exp_dir + 'ckpts/' + args.exp + '_' + str(args.lr)
-                    + '_' + str(args.window) + '_best' + '.path.tar')
-                print("Saving to ", args.exp_dir + 'ckpts/' + args.exp + '_' + str(args.lr)
-                    + '_' + str(args.window) + '_best' + '.path.tar')
-
-            avg_train_loss = np.array([avg_train_loss])
-            avg_val_loss = np.array([avg_val_loss])
-
-            train_loss_list = np.append(train_loss_list,avg_train_loss, axis =0)
-            val_loss_list = np.append(val_loss_list,avg_val_loss, axis = 0)
-
-            to_save = [train_loss_list[1:],val_loss_list[1:]]
-            pickle.dump(to_save, open( args.exp_dir + 'log/' + args.exp +
-                                       '_' + str(args.lr) + '_' + str(args.window) + '.p', "wb" ))
+        to_save = [train_loss_list[1:],val_loss_list[1:]]
+        pickle.dump(to_save, open( args.exp_dir + 'log/' + args.exp +
+                                   '_' + str(args.lr) + '_' + str(args.window) + '.p', "wb" ))
+        print("Save losses at: "+ args.exp_dir + 'log/' + args.exp + '_' + str(args.lr) + '_' + str(args.window) + '.p')
 
         print("Train Loss: %.6f, Valid Loss: %.6f" % (avg_train_loss, avg_val_loss))
         
